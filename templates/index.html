@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quitar Fondo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+.container{background:white;border-radius:20px;padding:30px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+h1{text-align:center;color:#333;margin-bottom:20px}
+.upload-area{border:3px dashed #667eea;border-radius:15px;padding:40px 20px;text-align:center;cursor:pointer;margin-bottom:20px}
+.upload-area:hover{background:#f8f9ff}
+.upload-icon{font-size:50px}
+#fileInput{display:none}
+.btn{width:100%;padding:15px;border:none;border-radius:10px;font-size:1.1em;cursor:pointer;margin-bottom:15px}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.btn-primary:disabled{background:#ccc;cursor:not-allowed}
+.btn-download{background:#28a745;color:white;display:none}
+.preview-container{display:none;margin-bottom:20px}
+.preview-wrapper{background:repeating-conic-gradient(#ccc 0% 25%,white 0% 50%) 50%/20px 20px;border-radius:10px;overflow:hidden}
+.preview-wrapper img{width:100%;display:block}
+.result-container{display:none;margin-top:20px}
+.loading{display:none;text-align:center;padding:20px}
+.spinner{width:50px;height:50px;border:5px solid #f3f3f3;border-top:5px solid #667eea;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{background:#fee;color:#c00;padding:10px;border-radius:10px;text-align:center;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Quitar Fondo</h1>
+<div class="upload-area" id="uploadArea">
+<div class="upload-icon">📷</div>
+<div>Toca para seleccionar foto</div>
+</div>
+<input type="file" id="fileInput" accept="image/*">
+<div class="preview-container" id="previewContainer">
+<div class="preview-wrapper"><img id="previewImage"></div>
+</div>
+<button class="btn btn-primary" id="processBtn" disabled>Quitar Fondo</button>
+<div class="loading" id="loading"><div class="spinner"></div><div>Procesando...</div></div>
+<div class="error" id="error"></div>
+<div class="result-container" id="resultContainer">
+<div class="preview-wrapper"><img id="resultImage"></div>
+</div>
+<button class="btn btn-download" id="downloadBtn">Descargar</button>
+</div>
+<script>
+const uploadArea=document.getElementById('uploadArea'),fileInput=document.getElementById('fileInput'),previewContainer=document.getElementById('previewContainer'),previewImage=document.getElementById('previewImage'),processBtn=document.getElementById('processBtn'),loading=document.getElementById('loading'),error=document.getElementById('error'),resultContainer=document.getElementById('resultContainer'),resultImage=document.getElementById('resultImage'),downloadBtn=document.getElementById('downloadBtn');
+let selectedFile=null;
+uploadArea.addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.target.files[0])});
+function handleFile(f){if(!f.type.startsWith('image/')){error.textContent='Selecciona una imagen';error.style.display='block';return}selectedFile=f;const r=new FileReader;r.onload=e=>{previewImage.src=e.target.result;previewContainer.style.display='block';processBtn.disabled=false;resultContainer.style.display='none';downloadBtn.style.display='none';error.style.display='none'};r.readAsDataURL(f)}
+processBtn.addEventListener('click',async()=>{if(!selectedFile)return;processBtn.disabled=true;loading.style.display='block';error.style.display='none';const fd=new FormData;fd.append('image',selectedFile);try{const res=await fetch('/remove_background',{method:'POST',body:fd}),d=await res.json();if(d.success){resultImage.src=d.image;resultContainer.style.display='block';downloadBtn.style.display='block'}else{error.textContent=d.error||'Error';error.style.display='block'}}catch(e){error.textContent='Error: '+e.message;error.style.display='block'}loading.style.display='none';processBtn.disabled=false});
+downloadBtn.addEventListener('click',()=>{const a=document.createElement('a');a.download='sin_fondo.png';a.href=resultImage.src;a.click()});
+</script>
+</body>
+</html>
